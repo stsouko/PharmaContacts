@@ -328,19 +328,19 @@ class PharmaContacts(MoleculeContainer):
 
         s_centers = []
         s_normals = []
-        for r in self.aromatic_centers:
+        for r in self.aromatic_rings:
             c, n = ring_math(r, s_xyz)
             s_centers.append(c)
             s_normals.append(n)
         o_centers = []
         o_normals = []
-        for r in other.aromatic_centers:
+        for r in other.aromatic_rings:
             c, n = ring_math(r, o_xyz)
             o_centers.append(c)
             o_normals.append(n)
 
-        for (nr, nc, nn), (mr, mc, mn) in product(zip(self.aromatic_centers, s_centers, s_normals),
-                                                  zip(other.aromatic_centers, o_centers, o_normals)):
+        for (nr, nc, nn), (mr, mc, mn) in product(zip(self.aromatic_rings, s_centers, s_normals),
+                                                  zip(other.aromatic_rings, o_centers, o_normals)):
             d = distance(nc, mc)
             if min_dist < d < pi_stack_dist_max:
                 a = vectors_angle(nn, mn)
@@ -357,14 +357,14 @@ class PharmaContacts(MoleculeContainer):
                 if offset < pi_stack_offset_max:
                     contacts.append(PiStack(nr, mr, d, a, t_shaped, offset))
 
-        for (nr, nc, nn), m in product(zip(self.aromatic_centers, s_centers, s_normals),
+        for (nr, nc, nn), m in product(zip(self.aromatic_rings, s_centers, s_normals),
                                        other.positive_charged_centers):
             d = distance(nc, o_xyz[m])
             if min_dist < d < pi_cation_dist_max:
                 offset = projected_distance(nn, nc, o_xyz[m])
                 if offset < pi_stack_offset_max:
                     contacts.append(PiCation(nr, m, d, offset))
-        for (mr, mc, mn), n in product(zip(other.aromatic_centers, o_centers, o_normals),
+        for (mr, mc, mn), n in product(zip(other.aromatic_rings, o_centers, o_normals),
                                        self.positive_charged_centers):
             d = distance(mc, s_xyz[n])
             if min_dist < d < pi_cation_dist_max:
@@ -604,35 +604,6 @@ class PharmaContacts(MoleculeContainer):
             if a.atomic_number == 6 and not charges[n] and all(atoms[m].atomic_number in (1, 6) for m in bonds[n]):
                 out.append(n)
         return tuple(out)
-
-    @cached_property
-    def aromatic_centers(self) -> Tuple[Tuple[int, ...], ...]:
-        """
-        Aromatic rings atoms.
-
-        Ignored compounds like N1C=CC=C2C=CC=C12.
-        """
-        atoms = self._atoms
-        charges = self._charges
-        hybridizations = self._hybridizations
-        aroma = self.aromatic_rings
-
-        # search pyroles
-        pyroles = []
-        for ring in self.sssr:
-            if len(ring) == 5 and ring not in aroma and all(not charges[n] for n in ring):
-                sp2 = 0
-                pa = None
-                for n in ring:
-                    if hybridizations[n] in (2, 4):
-                        sp2 += 1
-                    elif atoms[n].atomic_number in (7, 8, 15, 16):
-                        pa = n
-                if sp2 == 4 and pa:
-                    pyroles.append(ring)
-        if pyroles:
-            aroma = aroma + tuple(pyroles)
-        return aroma
 
     @cached_property
     def metal_ligands_centers(self) -> Tuple[int, ...]:

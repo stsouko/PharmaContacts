@@ -30,7 +30,7 @@ setup(
     author='Dr. Ramil Nugmanov',
     author_email='nougmanoff@protonmail.com',
     python_requires='>=3.6.0',
-    install_requires=['CGRtools>=4.0.32'],
+    install_requires=['CGRtools>=4.1.5'],
     zip_safe=True,
     long_description=(Path(__file__).parent / 'README.rst').read_text(),
     classifiers=['Environment :: Plugins',
